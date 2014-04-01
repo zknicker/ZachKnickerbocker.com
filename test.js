@@ -1,17 +1,23 @@
 var meter = new FPSMeter($('.fps-meter')[0]);
 
+var pixelSize = 6;
+var pixelSpacing = 0;
+var pixelColor = '#1596CC';
+
+var screenHeight = innerHeight * 0.8; //px
+var screenWidth = innerWidth; //px
+var xResolution = Math.ceil(screenWidth / (pixelSize + pixelSpacing));
+var yResolution = Math.ceil(screenHeight / (pixelSize + pixelSpacing));
+
 var PI = Math.PI;
 
 var canvas = document.getElementById("can");
 var c = canvas.getContext("2d");
 
-var resolution = { 'x': 200, 'y': 150 }
-var pixelSize = 6;
-var pixelColor = '#1596CC';
-var pixelSpacing = 0;
+var resolution = { 'x': xResolution, 'y': yResolution }
 
-canvas.width = (pixelSize + pixelSpacing) * resolution.x;
-canvas.height = (pixelSize + pixelSpacing) * resolution.y;
+canvas.height = screenHeight;
+canvas.width = screenWidth;
 
 var cWidth = canvas.width;
 var cHeight = canvas.height;
@@ -39,12 +45,12 @@ Pixel.prototype.draw = function() {
 function animate() {
   meter.tickStart();
   
-  c.fillStyle = "#333";
-  c.fillRect(x,y,cWidth,cHeight);
+  //c.fillStyle = "#333";
+  //c.fillRect(x,y,cWidth,cHeight);
 
   c.fillStyle = '#'+Math.floor(Math.random()*16777215).toString(16);
   for (i = 0; i < pixels.length; i++) {
-    if (Math.random() < Math.random()) 
+    if (Math.random() < 0.016) 
     pixels[i].draw();
   }
 
