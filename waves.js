@@ -1,6 +1,6 @@
 var meter = new FPSMeter($('.fps-meter')[0]);
 
-var pixelSize = 10;
+var pixelSize = 6;
 var pixelSpacing = 0;
 var pixelColor = '#1596CC';
 
@@ -33,46 +33,41 @@ window.requestAnimFrame = (function(){
           };
 })();
 
-pixelSources = new Array(256);
-for (var p = 0; p < pixelSources.length; p++) {
-    var pixelSource = c.createImageData(pixelSize, pixelSize);
-    var r = Math.floor(Math.random() * 255);
-    var g = Math.floor(Math.random() * 255);
-    var b = Math.floor(Math.random() * 255);
-    for (var i = 0; i < pixelSource.data.length; i += 4) {
-        pixelSource.data[i + 0] = r;
-        pixelSource.data[i + 1] = g;
-        pixelSource.data[i + 2] = b;
-        pixelSource.data[i + 3] = 255;
-    }
-    pixelSources[p] = pixelSource;
-}
-
 function Pixel(id, x, y) {
   this.x = x;
   this.y = y;
 }
-    var pixelShape = c.createImageData(pixelSize, pixelSize); // only do this once per page
-    var pixelShapeData  = pixelShape.data;                        // only do this once per page
 
 Pixel.prototype.draw = function() {
-    randomPixelSource = Math.floor(Math.random() * pixelSources.length);
-    c.putImageData(pixelSources[randomPixelSource], this.x, this.y);  
-  //c.fillRect(this.x, this.y, pixelSize, pixelSize);
+  c.fillRect(this.x, this.y, pixelSize, pixelSize);
 }
 
+animTime = 0;
+
+  c.fillStyle = "#FFF";
+  c.fillRect(0, 0, cWidth, cHeight);
+  image = c.getImageData(0, 0, cWidth, cHeight);
 function animate() {
   meter.tickStart();
   
-  //c.fillStyle = "#333";
-  //c.fillRect(x,y,cWidth,cHeight);
+  animTime = (animTime + 0.01) % (Math.PI * 2);
 
-  for (var i = 0; i < pixels.length; i++) {
-    if (Math.random() < 1) {
-        //c.fillStyle = '#'+Math.floor(Math.random()*16777215).toString(16);
-        pixels[i].draw();
-    }
-}
+  var r = Math.sin(animTime) * 255;
+  var g = Math.sin(animTime) * 255;
+  var b = Math.sin(animTime) * 255;
+
+  for (i = 0; i <= 2*Math.PI; i += 0.001) {
+    im = (i - animTime) % (2 * Math.PI);
+    var y = ((Math.sin(im) + 1) / 2) * (cHeight * Math.cos(animTime)) + (cHeight - (cHeight * Math.cos(animTime))) / 2;
+    var x = (i / (2 * Math.PI)) * cWidth;
+    var index = 4 * (Math.floor(y) * cWidth + Math.floor(x));
+    image.data[index] = 21;
+    image.data[index + 1] = r;
+    image.data[index + 2] = g;
+    image.data[index + 3] = b;
+  }
+
+  c.putImageData(image, 0, 0);
 
   meter.tick();
   requestAnimFrame(animate);
