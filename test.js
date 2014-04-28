@@ -14,8 +14,8 @@ var context = canvas.getContext("2d");
 
 var resolution = { 'x': xResolution, 'y': yResolution }
 
-canvas.height = screenHeight;
-canvas.width = screenWidth;
+var canvasHeight = canvas.height = screenHeight;
+var canvasWidth = canvas.width = screenWidth;
 
 var pixels = new Array(resolution.x * resolution.y);
 
@@ -29,15 +29,15 @@ window.requestAnimFrame = (function(){
 })();
 
 pixelDisplay = context.getImageData(0, 0, canvas.width, canvas.height);
-displayData = pixelDisplay.data;
 pixelDisplayBuffer = new Uint32Array(pixelDisplay.data.buffer);
+pixelDisplayBufferLength = pixelDisplayBuffer.length;
 
 function Pixel(id, x, y) {
     this.id = id;
     this.x = x;
-    this.y = y * resolution.x * pixelSize;
-    this.xBound = this.x + (pixelSize);
-    this.yBound = this.y + pixelSize * (resolution.x * pixelSize);
+    this.y = y * canvasWidth;
+    this.xBound = this.x + pixelSize;
+    this.yBound = this.y + pixelSize * canvasWidth;
 }
 
 anim = 0;
@@ -45,10 +45,11 @@ Pixel.prototype.draw = function() {
     anim += 0.1;
     var colors = { 'r': Math.random() * 255, 'g': Math.random() * 255, 'b': Math.random() * 255 }
     
-    for (var yy = this.y; yy <= this.yBound; yy += (resolution.x * pixelSize)) {
-        for (var xx = this.x; xx < this.xBound; xx++) {
+    for (var y = this.y; y <= this.yBound; y += (canvasWidth)) {
+        for (var x = this.x; x < this.xBound; x++) {
 
-            var i = yy + xx;
+            var i = y + x;
+            if (x < canvasWidth && i < pixelDisplayBufferLength)
             pixelDisplayBuffer[i] = 
                 (255 << 24)         | // alpha channel
                 (colors.r << 16)    | // blue channel
