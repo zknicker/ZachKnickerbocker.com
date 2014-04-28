@@ -9,18 +9,13 @@ var screenWidth = innerWidth; //px
 var xResolution = Math.ceil(screenWidth / (pixelSize + pixelSpacing));
 var yResolution = Math.ceil(screenHeight / (pixelSize + pixelSpacing));
 
-var PI = Math.PI;
-
 var canvas = document.getElementById("can");
-var c = canvas.getContext("2d");
+var context = canvas.getContext("2d");
 
 var resolution = { 'x': xResolution, 'y': yResolution }
 
 canvas.height = screenHeight;
 canvas.width = screenWidth;
-
-var cWidth = canvas.width;
-var cHeight = canvas.height;
 
 var pixels = new Array(resolution.x * resolution.y);
 
@@ -33,49 +28,46 @@ window.requestAnimFrame = (function(){
           };
 })();
 
-pixelSources = new Array(256);
-for (var p = 0; p < pixelSources.length; p++) {
-    var pixelSource = c.createImageData(pixelSize, pixelSize);
-    var r = Math.floor(Math.random() * 255);
-    var g = Math.floor(Math.random() * 255);
-    var b = Math.floor(Math.random() * 255);
-    for (var i = 0; i < pixelSource.data.length; i += 4) {
-        pixelSource.data[i + 0] = r;
-        pixelSource.data[i + 1] = g;
-        pixelSource.data[i + 2] = b;
-        pixelSource.data[i + 3] = 255;
-    }
-    pixelSources[p] = pixelSource;
-}
+pixelDisplay = context.getImageData(0, 0, canvas.width, canvas.height);
+displayData = pixelDisplay.data;
+pixelDisplayBuffer = new Uint32Array(pixelDisplay.data.buffer);
 
 function Pixel(id, x, y) {
-  this.x = x;
-  this.y = y;
+    this.id = id;
+    this.x = x;
+    this.y = y * resolution.x * pixelSize;
+    this.xBound = this.x + (pixelSize);
+    this.yBound = this.y + pixelSize * (resolution.x * pixelSize);
 }
-    var pixelShape = c.createImageData(pixelSize, pixelSize); // only do this once per page
-    var pixelShapeData  = pixelShape.data;                        // only do this once per page
 
+anim = 0;
 Pixel.prototype.draw = function() {
-    randomPixelSource = Math.floor(Math.random() * pixelSources.length);
-    c.putImageData(pixelSources[randomPixelSource], this.x, this.y);  
-  //c.fillRect(this.x, this.y, pixelSize, pixelSize);
+    anim += 0.1;
+    var colors = { 'r': Math.random() * 255, 'g': Math.random() * 255, 'b': Math.random() * 255 }
+    
+    for (var yy = this.y; yy <= this.yBound; yy += (resolution.x * pixelSize)) {
+        for (var xx = this.x; xx < this.xBound; xx++) {
+
+            var i = yy + xx;
+            pixelDisplayBuffer[i] = 
+                (255 << 24)         | // alpha channel
+                (colors.r << 16)    | // blue channel
+                (colors.g << 8)     | // green channel
+                (colors.b);           // red channel
+        }
+    }
 }
 
 function animate() {
-  meter.tickStart();
+    meter.tickStart();
   
-  //c.fillStyle = "#333";
-  //c.fillRect(x,y,cWidth,cHeight);
-
-  for (var i = 0; i < pixels.length; i++) {
-    if (Math.random() < 1) {
-        //c.fillStyle = '#'+Math.floor(Math.random()*16777215).toString(16);
+    for (var i = 0; i < pixels.length; i++) {
         pixels[i].draw();
     }
-}
+    context.putImageData(pixelDisplay, 0, 0);
 
-  meter.tick();
-  requestAnimFrame(animate);
+    meter.tick();
+    requestAnimFrame(animate);
 }
 
 for (i = 0; i < pixels.length; i++) {
