@@ -23,12 +23,15 @@ var canvasWidth = canvas.width = screenWidth;
 
 var pixels = new Array(resolution.x * resolution.y);
 
+var canvasImageUrls = [ './smiley.gif' ];
+var canvasImages;
+
 window.requestAnimFrame = (function(){
   return  window.requestAnimationFrame       ||
           window.webkitRequestAnimationFrame ||
           window.mozRequestAnimationFrame    ||
           function( callback ){
-            window.setTimeout(callback, 1000 / 60);
+              window.setTimeout(callback, 1000 / 60);
           };
 })();
 
@@ -40,20 +43,52 @@ function animate() {
     meter.tickStart();
 
     randomizeAllPixels();
-    colorCenterPixel();
+    //colorCenterPixel();
+    drawImage(canvasImages[Math.floor(Math.random() * 3)], Math.floor(Math.random() * resolution.x), Math.floor(Math.random() * resolution.y));
     context.putImageData(pixelDisplay, 0, 0);
 
     meter.tick();
     requestAnimFrame(animate);
 }
 
-function xyToDisplayPixel(x, y) {
+function pixelCoordToPixel(x, y) {
     return pixels[y * resolution.x + x];
+}
+
+function drawImage(image, x, y) {
+
+    // Load the image into a hidden canvas.
+    var pxWidth = image.width;
+    var pxHeight = image.height;
+    var canvas = document.createElement('canvas');
+    canvas.height = pxHeight;;
+    canvas.width = pxWidth;
+    var context = canvas.getContext('2d');
+
+    context.drawImage(image, 0, 0);
+    data = context.getImageData(0, 0, image.width, image.height);
+    data = data.data;
+
+    // Using the canvas, paint pixels one-by-one.
+    var i = 0;
+    var xPos = x; var yPos = y;
+    while (i < data.length) {
+        xPos = x + (i / 4) % pxWidth;
+        yPos = y + Math.floor((i / 4) / pxWidth);
+        pixel = pixelCoordToPixel(xPos, yPos)
+
+        if (pixel && data[i+3] != 0) {
+            pixel.setColor(data[i], data[i + 1], data[i + 2], data[i + 3]);
+        }
+
+        i += 4;
+    }
 }
 
 var snakePixel = 0;
 var snakeMode = 0;
 var snakeThreshold = resolution.x;
+
 function snake() {
     pixels[snakePixel].setColor(100, 200, 255, 255);
     snakeThreshold--;
@@ -77,7 +112,7 @@ function colorCenterPixel() {
     var xCenter = Math.floor(resolution.x / 2);
     var yCenter = Math.ceil((resolution.y - 4) / 2);
 
-    displayPixel = xyToDisplayPixel(xCenter, yCenter);
+    displayPixel = pixelCoordToPixel(xCenter, yCenter);
     displayPixel.setColor(Math.random() * 255, Math.random() * 255, Math.random() * 255, 255);
 }
 
@@ -112,5 +147,14 @@ function initialize() {
     }
 }
 
-initialize();
-animate();
+// Preload images first, and then start the display.
+preloadImages(["./smiley0.gif","./smiley1.gif","./smiley2.gif"]).done(function(images) {
+    canvasImages = new Array(images.length);
+    for (var i = 0; i < images.length; i++) {
+        canvasImages[i] = images[i];
+    }
+    console.log(canvasImages);
+
+    initialize();
+    animate();
+});
