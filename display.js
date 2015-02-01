@@ -4,11 +4,11 @@ Display.config = {
 }
 var meter = new FPSMeter($('.fps-meter')[0]);
 
-var pixelSize = 10;
+var pixelSize = 8;
 var pixelSpacing = 0;
 var pixelColor = '#1596CC';
 
-var screenHeight = innerHeight * 0.7;
+var screenHeight = innerHeight * 0.42;
 var screenWidth = innerWidth;
 var xResolution = Math.ceil(screenWidth / (pixelSize + pixelSpacing));
 var yResolution = Math.floor(screenHeight / (pixelSize + pixelSpacing));
@@ -39,12 +39,16 @@ pixelDisplay = context.getImageData(0, 0, canvas.width, canvas.height);
 pixelDisplayBuffer = new Uint32Array(pixelDisplay.data.buffer);
 pixelDisplayBufferLength = pixelDisplayBuffer.length;
 
+var naiveSeconds = 0;
 function animate() {
     meter.tickStart();
-
-    randomizeAllPixels();
+    
+    naiveSeconds++;
+    //randomizeAllPixels(0);
     //colorCenterPixel();
-    drawImage(canvasImages[Math.floor(Math.random() * 3)], Math.floor(Math.random() * resolution.x), Math.floor(Math.random() * resolution.y));
+    randomizeAllPixels(1);
+    drawImage(canvasImages[3],Math.floor(resolution.x / 2), Math.floor(resolution.y / 2));
+    //drawImage(canvasImages[Math.floor(Math.random() * 3)], Math.floor(Math.random() * resolution.x), Math.floor(Math.random() * resolution.y));
     context.putImageData(pixelDisplay, 0, 0);
 
     meter.tick();
@@ -61,7 +65,7 @@ function drawImage(image, x, y) {
     var pxWidth = image.width;
     var pxHeight = image.height;
     var canvas = document.createElement('canvas');
-    canvas.height = pxHeight;;
+    canvas.height = pxHeight;
     canvas.width = pxWidth;
     var context = canvas.getContext('2d');
 
@@ -82,6 +86,58 @@ function drawImage(image, x, y) {
         }
 
         i += 4;
+    }
+}
+
+var stars = new Array(50);
+function preloadSpace() {
+    for (var i = 0; i < stars.length; i++) {
+        var randomX = Math.floor(Math.random() * resolution.x);
+        var randomY = Math.floor(Math.random() * (resolution.y - 4));
+        console.log(pixelCoordToPixel(randomX, randomY));
+        stars[i] = pixelCoordToPixel(randomX, randomY);
+    }   
+}
+
+function drawSpace() {
+    // draw spaces
+    for (var i = 0; i < pixels.length; i++) {
+        pixels[i].setColor(0, 0, 0, 255);
+    }
+    
+    //draw stars
+    for (var i = 0; i < stars.length; i++) {
+        var thisPixel = stars[i];
+        thisPixel.setColor(255, 255, 255, 255);
+    }
+}
+
+
+var gradientOffset = 1;
+var gradientThickness = 12;
+var gradientColors = 2;
+var gradientStart = hexToRgb('#afdcef');
+var gradientEnd = hexToRgb('#79c9ea');
+var gradient = new Array(gradientColors);
+for (var i = 0; i < gradientColors; i++) {
+    gradient[i] = getGradientColor(gradientStart, gradientEnd, 100 * i / (gradientColors - 1));
+}
+
+var gradientTimeOffset = 0;
+function drawGradient(time) {
+    var curGradientOffset = 0;
+    gradientTimeOffset += (time % 4 ? 0 : 1);
+    
+    for (var y = 0; y < resolution.y; y++) {
+        for (var x = 0; x < resolution.x; x++) {
+            var thisPixel = pixelCoordToPixel(x, y);
+            var gradientIndex = Math.floor((x + curGradientOffset + gradientTimeOffset) / gradientThickness) % gradientColors;
+            var thisColor = gradient[gradientIndex];
+            thisPixel.setColor(thisColor.r, thisColor.g, thisColor.b, 255);
+        }
+        if (y % 3 == 0) {
+            curGradientOffset++;
+        }
     }
 }
 
@@ -116,10 +172,21 @@ function colorCenterPixel() {
     displayPixel.setColor(Math.random() * 255, Math.random() * 255, Math.random() * 255, 255);
 }
 
-function randomizeAllPixels() {
-    for (var i = 0; i < pixels.length; i++) {
-        pixels[i].setColor(Math.random() * 255, Math.random() * 255, Math.random() * 255, 50);
+var hasRandomized = false;
+function randomizeAllPixels(type) {
+    if (type == 0) {
+        for (var i = 0; i < pixels.length; i++) {
+            pixels[i].setColor(Math.random() * 255, Math.random() * 255, Math.random() * 255, 50);
+        }
+    } else if (type == 1) {
+        for (var i = 0; i < pixels.length; i++) {
+            if (Math.random() > 0.99 || !hasRandomized) {
+                var grayColor = Math.random() * 255;
+                pixels[i].setColor(grayColor, grayColor, grayColor, 50);
+            }
+        }
     }
+    hasRandomized = true;
 }
 
 function initialize() {
@@ -148,13 +215,14 @@ function initialize() {
 }
 
 // Preload images first, and then start the display.
-preloadImages(["./smiley0.gif","./smiley1.gif","./smiley2.gif"]).done(function(images) {
+preloadImages(["./smiley0.gif","./smiley1.gif","./smiley2.gif","./zach.png"]).done(function(images) {
     canvasImages = new Array(images.length);
     for (var i = 0; i < images.length; i++) {
         canvasImages[i] = images[i];
     }
-    console.log(canvasImages);
 
     initialize();
+    preloadSpace();
+    
     animate();
 });

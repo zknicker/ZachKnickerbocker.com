@@ -4,8 +4,9 @@ function Pixel(id, x, y) {
     this.x = x;
     this.y = y * canvasWidth;
     this.xBound = this.x + pixelSize;
-    this.yBound = this.y + pixelSize * canvasWidth;
+    this.yBound = this.y + pixelSize * (canvasWidth - 1);
     this.isBorderPixel = false;
+    this.color = {r: 255, g: 255, b: 255};
 }
 
 /* Set the color of the pixel. r, g, b, a values are 0 - 255. */
@@ -25,6 +26,13 @@ Pixel.prototype.setColor = function(r, g, b, a) {
             }
         }
     }
+    this.color.r = r;
+    this.color.g = g;
+    this.color.b = b;
+}
+
+Pixel.prototype.getColor = function() {
+    return this.color;
 }
 
 Pixel.prototype.setBorderPixel = function(chance) {
